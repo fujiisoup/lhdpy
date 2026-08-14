@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lhdpy"
+dynamic = ["version"]
+description = "Python small library to download LHD data archives."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
+authors = [
+    { name = "Keisuke Fujii", email = "fujiisoup@gmail.com" },
+]
+keywords = ["plasma", "fusion"]
+dependencies = [
+    "numpy>=1.11",
+    "six",
+    "xarray>=0.10",
+]
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.optional-dependencies]
+test = [
+    "netCDF4",
+    "pytest",
+]
+
+[project.urls]
+Homepage = "https://github.com/fujiisoup/lhdpy"
+Repository = "https://github.com/fujiisoup/lhdpy"
+Issues = "https://github.com/fujiisoup/lhdpy/issues"
+
+[tool.setuptools]
+packages = ["lhdpy"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "lhdpy._version.__version__" }
