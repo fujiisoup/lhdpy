@@ -15,6 +15,7 @@ authors = [
 keywords = ["plasma", "fusion"]
 dependencies = [
     "numpy>=1.11",
+    "requests",
     "six",
     "xarray>=0.10",
 ]

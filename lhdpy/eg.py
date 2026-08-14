@@ -1,8 +1,9 @@
 import numpy as np
-from collections import OrderedDict
-from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from six import string_types
+from tempfile import NamedTemporaryFile
+import requests
 import xarray as xr
 
 
@@ -24,7 +25,37 @@ def load_robust(filename, diag, shotnumber):
     return load(filename, **overwrite_params)
 
 
-def load(filename, **overwrite_params):
+def download(diagname, shotnum, convertors=None, **overwrite_params):
+    """Download the eg_data from the LHD data archive.
+    See https://www-lhd.nifs.ac.jp/pub/Repository_en.html
+    for the details.
+    """
+    url = "https://exp.lhd.nifs.ac.jp/opendata/LHD/webapi.fcgi?cmd=getfile&diag={}&shotno={}&subno=1".format(
+        diagname, shotnum
+    )
+
+    temporary_path = None
+    try:
+        with requests.get(url, stream=True, timeout=120) as response:
+            response.raise_for_status()
+
+            # delete=False lets load() reopen the file after it has been
+            # closed, including on Windows.
+            with NamedTemporaryFile(
+                mode="wb", prefix="lhdpy-", suffix=".dat", delete=False
+            ) as temporary_file:
+                temporary_path = Path(temporary_file.name)
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        temporary_file.write(chunk)
+
+        return load(str(temporary_path), convertors, **overwrite_params)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def load(filename, convertors=None, **overwrite_params):
     """
     Load eg-file and returns as xarray.DataSet.
 
@@ -41,6 +72,14 @@ def load(filename, **overwrite_params):
 
     we do not read the corresponding parameter from file but
     adapt the passed value.
+
+    Convertor can be used to convert some weird values, e.g.,
+
+    def robustfloat(s):
+      try:
+        return float(s)
+      except (ValueError, TypeError):
+        return np.nan
     """
     parameters = {}
     comments = {}
@@ -133,11 +172,12 @@ def load(filename, **overwrite_params):
         """
         # temporary data
         try:
-            tmpdata = np.loadtxt(filename, comments='#', delimiter=',')
+            tmpdata = np.loadtxt(filename, comments='#', delimiter=',',
+                                 converters=convertors)
         except ValueError as e:
             cols = range(parameters['DimNo'] + parameters['ValNo'])
             tmpdata = np.loadtxt(filename, comments='#', delimiter=',',
-                                 usecols=cols)
+                                 usecols=cols, converters=convertors)
     except Exception as e:
         print(e)
     finally:
