@@ -12,3 +12,18 @@ def test_download(diag, shot):
     data.to_netcdf('test.nc')
     # check if data can be converted to the eg file
     eg.dump(data, 'test.dat')
+
+
+@pytest.mark.parametrize(('diag', 'shot'), [
+    ('DivIis_tor', 123333),
+])
+def test_eg_download(diag, shot):
+    data = core.download(diag, shot)
+    # check if data can be converted to netcdf
+    data.to_netcdf('test.nc')
+    # check if data can be converted to the eg file
+    eg.dump(data, 'test.dat')
+    expected = eg.load('test.dat')
+    actual = eg.download(diag, shot)
+
+    assert expected == actual
