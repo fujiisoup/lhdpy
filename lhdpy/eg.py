@@ -15,14 +15,23 @@ def _replace_illegal_characters(s):
         s = s.replace(key, item)
     return s
 
-def load_robust(filename, diag, shotnumber):
+def load_robust(filename, diag, shotnumber, convertors=None, **overwrite_params):
     # there are several diagnostics that do not follow the format exactly.
     # we need to overwrite them.
     overwrite_params = {}
     if diag == 'ha2':
         overwrite_params['ShotNo'] = shotnumber
 
-    return load(filename, **overwrite_params)
+    # replace some weird error 
+    if isinstance(filename, str):
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        filename = lines
+    
+    for i, line in enumerate(filename):
+        filename[i] = line.replace('-1.#IND00e+000', ' 0.000000e+000').encode()
+    
+    return load(filename, convertors, **overwrite_params)
 
 
 def download(diagname, shotnum, convertors=None, **overwrite_params):
@@ -49,7 +58,7 @@ def download(diagname, shotnum, convertors=None, **overwrite_params):
                     if chunk:
                         temporary_file.write(chunk)
 
-        return load(str(temporary_path), convertors, **overwrite_params)
+        return load_robust(str(temporary_path), diagname, shotnum, convertors, **overwrite_params)
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)

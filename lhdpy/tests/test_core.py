@@ -16,6 +16,7 @@ def test_download(diag, shot):
 
 @pytest.mark.parametrize(('diag', 'shot'), [
     ('DivIis_tor', 123333),
+    ('high_time_res_thomson', 169471),
 ])
 def test_eg_download(diag, shot):
     data = core.download(diag, shot)
@@ -27,3 +28,4 @@ def test_eg_download(diag, shot):
     actual = eg.download(diag, shot)
 
     assert expected == actual
+
